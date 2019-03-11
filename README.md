@@ -25,7 +25,7 @@ $ npm start
 
 ## Usage example
 
-I don't think screenshots will do justice to see how the app works.  So I recorded a [demo][https://youtu.be/FW214WbsseQ] of me interacting with the site.
+I don't think screenshots will do justice to see how the app works.  So I recorded a [demo](https://youtu.be/FW214WbsseQ) of me interacting with the site.
 
 ## Release History
 
