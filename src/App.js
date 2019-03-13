@@ -20,6 +20,22 @@ import CircleSideMenu from './Components/CircleSideMenu.js'
 //   );
 // }
 
+// var promise1 = new Promise(function(resolve, reject) {
+//   setTimeout(function() {
+//     resolve('foo');
+//   }, 300);
+//
+//   if (window.getSelection().focusNode.textContent === "") {
+//     let dim = window.getSelection().focusNode.getBoundingClientRect();
+//     this.setState({
+//       x: dim.x,
+//       y: dim.top + window.scrollY,
+//       visible: true
+//     });
+//   }
+// });
+
+
 class App extends React.Component {
   constructor() {
     super();
@@ -34,6 +50,7 @@ class App extends React.Component {
       popVisible: false
     };
     this.timer = null;
+    this.contentEditable = React.createRef();
   }
 
   onUpdate = e => {
@@ -55,7 +72,43 @@ class App extends React.Component {
     }
   };
 
+  handleEvent(e) {
+    if (e.code === "Enter" || e.code === "Backspace") {
+      this.timer = setTimeout(() => {
+        if (window.getSelection().focusNode.textContent === "") {
+          //document.execCommand("formatBlock", false, "p");
+          console.log(this.timer);
+          let dim = window.getSelection().focusNode.getBoundingClientRect();
+          this.setState({
+            x: dim.x,
+            y: dim.top + window.scrollY,
+            visible: true
+          });
+        } else {
+          this.setState({ visible: false });
+        }
+      }, 0);
+    }
+    e.stopPropagation();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (window.getSelection().focusNode.textContent === "" && this.state.visible === false) {
+      //document.execCommand("formatBlock", false, "p");
+      let dim = window.getSelection().focusNode.getBoundingClientRect();
+      this.setState({
+        x: dim.x,
+        y: dim.top + window.scrollY,
+        visible: true
+      });
+    } else if (window.getSelection().focusNode.textContent !== "" && this.state.visible === true){
+      this.setState({ visible: false });
+    }
+}
+
   componentDidMount() {
+    //this.contentEditable.current.addEventListener('keydown', this)
+
     document.addEventListener("mouseup", () => {
       this.timer = setTimeout(() => {
         clearTimeout(this.timer);
@@ -78,13 +131,13 @@ class App extends React.Component {
         this.onUpdate(e);
       }, 0);
     });
-    document.addEventListener("mousedown", () => {
-      clearTimeout(this.timer);
-      console.log(this.timer, " timer mousedown");
-      this.timer = setTimeout(e => {
-        this.onUpdate(e);
-      }, 0);
-    });
+    // document.addEventListener("mousedown", () => {
+    //   clearTimeout(this.timer);
+    //   console.log(this.timer, " timer mousedown");
+    //   this.timer = setTimeout(e => {
+    //     this.onUpdate(e);
+    //   }, 0);
+    // });
   }
 
   handleChange = evt => {
@@ -125,6 +178,7 @@ class App extends React.Component {
       <div>
         <h3>editable contents</h3>
         <ContentEditable
+          innerRef={this.contentEditable}
           className="editable"
           tagName="div"
           html={this.state.html} // innerHTML of the editable div
