@@ -3,20 +3,22 @@ import logo from './logo.svg';
 import ContentEditable from "react-contenteditable";
 import sanitizeHtml from "sanitize-html";
 import './App.css';
+import PopOver from './Components/PopOver.js'
+import CircleSideMenu from './Components/CircleSideMenu.js'
 
-function EditButton(props) {
-  return (
-    <button
-      key={props.cmd}
-      onMouseDown={evt => {
-        evt.preventDefault(); // Avoids loosing focus from the editable area
-        document.execCommand(props.cmd, false, props.arg); // Send the command to the browser
-      }}
-    >
-      {props.name || props.cmd}
-    </button>
-  );
-}
+// function EditButton(props) {
+//   return (
+//     <button
+//       key={props.cmd}
+//       onMouseDown={evt => {
+//         evt.preventDefault(); // Avoids loosing focus from the editable area
+//         document.execCommand(props.cmd, false, props.arg); // Send the command to the browser
+//       }}
+//     >
+//       {props.name || props.cmd}
+//     </button>
+//   );
+// }
 
 class App extends React.Component {
   constructor() {
@@ -138,42 +140,9 @@ class App extends React.Component {
           onChange={this.handleChange}
           onBlur={this.sanitize}
         />
+          <CircleSideMenu logo={logo} className={"circlePopup"} x={this.state.x} y={this.state.y} show={this.state.visible}/>
 
-        {this.state.visible && (
-          <div
-            ref={this.myRef}
-            className="circlePopup"
-            style={{
-              position: "absolute",
-              left: `${this.state.x - 40}px`,
-              top: `${this.state.y - 7}px`
-            }}
-          >
-            <img src={logo} className="App-logo" alt="logo" />
-          </div>
-        )}
-        {this.state.popVisible && (
-          <div
-            className="popup"
-            style={{
-              position: "absolute",
-              left: `${this.state.left}px`,
-              top: `${this.state.top}px`
-            }}
-          >
-            {" "}
-            <blockquote />
-            <EditButton cmd="formatBlock" arg="p" name="paragraph" />
-            <EditButton cmd="bold" arg="null" name="Bold" />
-            <EditButton cmd="formatBlock" arg="h1" name="heading" />
-            <EditButton cmd="formatBlock" arg="blockquote" name="blockquote" />
-            <EditButton
-              cmd="createLink"
-              arg="https://github.com/lovasoa/react-contenteditable"
-              name="hyperlink"
-            />
-          </div>
-        )}
+          <PopOver top={this.state.top} left={this.state.left} show={this.state.popVisible}/>
       </div>
     );
   };
