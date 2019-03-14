@@ -6,41 +6,11 @@ import './App.css';
 import PopOver from './Components/PopOver.js'
 import CircleSideMenu from './Components/CircleSideMenu.js'
 
-// function EditButton(props) {
-//   return (
-//     <button
-//       key={props.cmd}
-//       onMouseDown={evt => {
-//         evt.preventDefault(); // Avoids loosing focus from the editable area
-//         document.execCommand(props.cmd, false, props.arg); // Send the command to the browser
-//       }}
-//     >
-//       {props.name || props.cmd}
-//     </button>
-//   );
-// }
-
-// var promise1 = new Promise(function(resolve, reject) {
-//   setTimeout(function() {
-//     resolve('foo');
-//   }, 300);
-//
-//   if (window.getSelection().focusNode.textContent === "") {
-//     let dim = window.getSelection().focusNode.getBoundingClientRect();
-//     this.setState({
-//       x: dim.x,
-//       y: dim.top + window.scrollY,
-//       visible: true
-//     });
-//   }
-// });
-
-
 class App extends React.Component {
   constructor() {
     super();
     this.state = {
-      html: `<p>Hello <b>World</b> !</p><p>Paragraph 2</p>`,
+      html: ``,
       editable: true,
       x: null,
       y: null,
@@ -53,91 +23,77 @@ class App extends React.Component {
     this.contentEditable = React.createRef();
   }
 
-  onUpdate = e => {
+  handleEvent = (e) => {
     if (this.timer) {
-      console.log(this.timer);
+      clearTimeout(this.timer);
+      this.timer = null;
     }
-    if (window.getSelection().focusNode.textContent === "") {
-      document.execCommand("formatBlock", false, "p");
-      console.log(this.timer);
-      let dim = window.getSelection().focusNode.getBoundingClientRect();
+    this.timer = setTimeout(() => {
+      var text = "";
+      text = window.getSelection();
+      let start = text.anchorNode;
+      let end = text.focusNode;
+      console.log(start, '=====start======')
+      console.log(end, '=====end======')
+      console.log(start.isSameNode(end))
+      if (e.key==="Backspace" && this.state.html === "") {
+        document.execCommand("formatBlock", false, "p");
+      }
 
-      this.setState({
-        x: dim.x,
-        y: dim.top + window.scrollY,
-        visible: true
-      });
-    } else {
-      this.setState({ visible: false });
-    }
-  };
+      if (text.toString().length > 0 && start.isSameNode(end) && e.type==="mouseup" ) {
+        let oRange = text.getRangeAt(0);
+        let dim = oRange.getBoundingClientRect();
+        this.setState({
+          left: dim.left + dim.width / 2 - 293 / 2,
+          top: dim.top - 51 + window.scrollY,
+          popVisible: true
+        });
+      } else if ((e.type==='mouseup' || e.key==="Backspace") &&  text.isCollapsed){
+        this.setState({ popVisible: false });
+      }
+      // console.log(text, '=====text======')
+      // console.log(text.anchorNode.nodeType, '=====nodetype======')
+      // console.log(text.isCollapsed, '=====collapse======')
+      if (text.anchorNode.nodeType !== 3 && text.isCollapsed ) {
+        let dim = window.getSelection().focusNode.getBoundingClientRect();
+        console.log(text.isCollapsed, '======text collapase====')
+        this.setState({
+          x: dim.x,
+          y: dim.top + window.scrollY,
+          visible: true
+        });
+      } else if (window.getSelection().focusNode.textContent !== "" && (e.type==="keydown" ||e.type==="mousedown") ){
+        this.setState({ visible: false });
 
-  handleEvent(e) {
-    if (e.code === "Enter" || e.code === "Backspace") {
-      this.timer = setTimeout(() => {
-        if (window.getSelection().focusNode.textContent === "") {
-          //document.execCommand("formatBlock", false, "p");
-          console.log(this.timer);
-          let dim = window.getSelection().focusNode.getBoundingClientRect();
-          this.setState({
-            x: dim.x,
-            y: dim.top + window.scrollY,
-            visible: true
-          });
-        } else {
-          this.setState({ visible: false });
-        }
-      }, 0);
-    }
-    e.stopPropagation();
+      }
+
+      if (e.key==="Enter") {
+        document.execCommand("formatBlock", false, "p");
+        let dim = window.getSelection().focusNode.getBoundingClientRect();
+        this.setState({
+          x: dim.x,
+          y: dim.top + window.scrollY,
+          visible: true
+        });
+      }
+    }, 0);
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (window.getSelection().focusNode.textContent === "" && this.state.visible === false) {
-      //document.execCommand("formatBlock", false, "p");
-      let dim = window.getSelection().focusNode.getBoundingClientRect();
-      this.setState({
-        x: dim.x,
-        y: dim.top + window.scrollY,
-        visible: true
-      });
-    } else if (window.getSelection().focusNode.textContent !== "" && this.state.visible === true){
-      this.setState({ visible: false });
-    }
-}
-
   componentDidMount() {
-    //this.contentEditable.current.addEventListener('keydown', this)
+    document.getElementsByClassName("editable")[0].focus()
+    document.execCommand("formatBlock", false, "p");
 
-    document.addEventListener("mouseup", () => {
-      this.timer = setTimeout(() => {
-        clearTimeout(this.timer);
-        this.getSelectionText();
-      }, 0);
+    let dim = window.getSelection().focusNode.getBoundingClientRect();
+    this.setState({
+      x: dim.x,
+      y: dim.top + window.scrollY,
+      visible: true
     });
-    document.addEventListener("keyup", () => {
-      this.timer = setTimeout(() => {
-        clearTimeout(this.timer);
-        this.getSelectionText();
-      }, 0);
-    });
-    //added delay since keyup will add div but we wont
-    //have access to dimensions right away so i added
-    //delay to keydown so it can wait to get dimensions
-    //then add div
-    document.addEventListener("keydown", () => {
-      this.timer = setTimeout(e => {
-        clearTimeout(this.timer);
-        this.onUpdate(e);
-      }, 0);
-    });
-    // document.addEventListener("mousedown", () => {
-    //   clearTimeout(this.timer);
-    //   console.log(this.timer, " timer mousedown");
-    //   this.timer = setTimeout(e => {
-    //     this.onUpdate(e);
-    //   }, 0);
-    // });
+
+    this.contentEditable.current.addEventListener('mouseup', this)
+    this.contentEditable.current.addEventListener('mousedown', this)
+    this.contentEditable.current.addEventListener('keydown', this)
+
   }
 
   handleChange = evt => {
@@ -157,27 +113,12 @@ class App extends React.Component {
     this.setState({ editable: !this.state.editable });
   };
 
-  getSelectionText = () => {
-    var text = "";
-    text = window.getSelection();
-    if (text.toString().length > 0) {
-      let oRange = text.getRangeAt(0);
-      let dim = oRange.getBoundingClientRect();
-      this.setState({
-        left: dim.left + dim.width / 2 - 293 / 2,
-        top: dim.top - 51 + window.scrollY,
-        popVisible: true
-      });
-    } else {
-      this.setState({ popVisible: false });
-    }
-  };
-
   render = () => {
     return (
       <div>
         <h3>editable contents</h3>
         <ContentEditable
+          id="parent"
           innerRef={this.contentEditable}
           className="editable"
           tagName="div"
